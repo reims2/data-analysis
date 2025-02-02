@@ -8,8 +8,11 @@ dependencies = []
 
 [dependency-groups]
 dev = [
+    "ipykernel>=6.29.5",
+    "ipympl>=0.9.6",
     "jupyter>=1.1.1",
     "matplotlib>=3.10.0",
+    "notebook==6.4.12",
     "numpy>=2.2.2",
     "pandas>=2.2.3",
     "pyqt6>=6.8.0",

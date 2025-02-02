@@ -8,8 +8,11 @@ source = { virtual = "." }
 
 [package.dev-dependencies]
 dev = [
+    { name = "ipykernel" },
+    { name = "ipympl" },
     { name = "jupyter" },
     { name = "matplotlib" },
+    { name = "notebook" },
     { name = "numpy" },
     { name = "pandas" },
     { name = "pyqt6" },
@@ -21,8 +24,11 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "ipykernel", specifier = ">=6.29.5" },
+    { name = "ipympl", specifier = ">=0.9.6" },
     { name = "jupyter", specifier = ">=1.1.1" },
     { name = "matplotlib", specifier = ">=3.10.0" },
+    { name = "notebook", specifier = "==6.4.12" },
     { name = "numpy", specifier = ">=2.2.2" },
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "pyqt6", specifier = ">=6.8.0" },
@@ -470,6 +476,23 @@ wheels = [
 ]
 
 [[package]]
+name = "ipympl"
+version = "0.9.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ipython" },
+    { name = "ipywidgets" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "pillow" },
+    { name = "traitlets" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/48/cf/a8cd557d057dfba40401fbd1aa1cc9deba4bd0d3c9fbd89f37f4307c1291/ipympl-0.9.6.tar.gz", hash = "sha256:51c762550a55e64f9c97b42fbcc7076879f696fb44761f5ebaf6f79821ea918f", size = 58483821 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c4/c8/1e6b3fda28c6a07db28840cc02c94569ed10c0997ec75669fbbd96a46257/ipympl-0.9.6-py3-none-any.whl", hash = "sha256:c4afdf95eac244d067550934574061bafd1446bf31af42b6e9f6750cb97f2446", size = 515714 },
+]
+
+[[package]]
 name = "ipython"
 version = "8.32.0"
 source = { registry = "https://pypi.org/simple" }
@@ -487,6 +510,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/36/80/4d2a072e0db7d250f134bc11676517299264ebe16d62a8619d49a78ced73/ipython-8.32.0.tar.gz", hash = "sha256:be2c91895b0b9ea7ba49d33b23e2040c352b33eb6a519cca7ce6e0c743444251", size = 5507441 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e7/e1/f4474a7ecdb7745a820f6f6039dc43c66add40f1bcc66485607d93571af6/ipython-8.32.0-py3-none-any.whl", hash = "sha256:cae85b0c61eff1fc48b0a8002de5958b6528fa9c8defb1894da63f42613708aa", size = 825524 },
+]
+
+[[package]]
+name = "ipython-genutils"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/69/fbeffffc05236398ebfcfb512b6d2511c622871dca1746361006da310399/ipython_genutils-0.2.0.tar.gz", hash = "sha256:eb2e116e75ecef9d4d228fdc66af54269afa26ab4463042e33785b887c628ba8", size = 22208 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fa/bc/9bd3b5c2b4774d5f33b2d544f1460be9df7df2fe42f352135381c347c69a/ipython_genutils-0.2.0-py2.py3-none-any.whl", hash = "sha256:72dd37233799e619666c9f639a9da83c34013a73e8bbc79a7a6348d93c61fab8", size = 26343 },
 ]
 
 [[package]]
@@ -1019,18 +1051,28 @@ wheels = [
 
 [[package]]
 name = "notebook"
-version = "7.3.2"
+version = "6.4.12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "jupyter-server" },
-    { name = "jupyterlab" },
-    { name = "jupyterlab-server" },
-    { name = "notebook-shim" },
+    { name = "argon2-cffi" },
+    { name = "ipykernel" },
+    { name = "ipython-genutils" },
+    { name = "jinja2" },
+    { name = "jupyter-client" },
+    { name = "jupyter-core" },
+    { name = "nbconvert" },
+    { name = "nbformat" },
+    { name = "nest-asyncio" },
+    { name = "prometheus-client" },
+    { name = "pyzmq" },
+    { name = "send2trash" },
+    { name = "terminado" },
     { name = "tornado" },
+    { name = "traitlets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ea/04/ac488379d5afef43402b3fb4be2857db1a09804fecf98b9b714c741b225b/notebook-7.3.2.tar.gz", hash = "sha256:705e83a1785f45b383bf3ee13cb76680b92d24f56fb0c7d2136fe1d850cd3ca8", size = 12781804 }
+sdist = { url = "https://files.pythonhosted.org/packages/d5/94/b15c0e44c37e49cf77866ff56cc7644632229b79c113a0eafd908fc7c7d7/notebook-6.4.12.tar.gz", hash = "sha256:6268c9ec9048cff7a45405c990c29ac9ca40b0bc3ec29263d218c5e01f2b4e86", size = 14389641 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/22/9b/76e50ee18f183ea5fe1784a9eeaa50f2c71802e4740d6e959592b0993298/notebook-7.3.2-py3-none-any.whl", hash = "sha256:e5f85fc59b69d3618d73cf27544418193ff8e8058d5bf61d315ce4f473556288", size = 13163630 },
+    { url = "https://files.pythonhosted.org/packages/b5/62/229659241aee54be38990e06e684bcfe5c9c8727185f5e39335be8821583/notebook-6.4.12-py3-none-any.whl", hash = "sha256:8c07a3bb7640e371f8a609bdbb2366a1976c6a2589da8ef917f761a61e3ad8b1", size = 9934585 },
 ]
 
 [[package]]
