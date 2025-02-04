@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
 
+pd.options.mode.copy_on_write = True
+
 
 def get_features(multifocal):
     return (
@@ -78,20 +80,24 @@ def clustering(data, X_scaled, num_clusters):
     # Perform hierarchical clustering on filtered data
     Z = linkage(X_scaled, method="ward")
 
-    # Plot the dendrogram
-    plt.figure(figsize=(10, 7))
-    dendrogram(Z)
+    data["cluster"] = fcluster(Z, t=num_clusters, criterion="maxclust")
+    data["cluster"] = data["cluster"].astype(str)
+
+    # Plot the dendrogram with a smaller figure size and truncate mode
+    plt.figure(figsize=(8, 3))
+    dendrogram(
+        Z,
+        truncate_mode="lastp",
+        p=num_clusters * 2,
+        leaf_rotation=90.0,
+        leaf_font_size=12.0,
+        color_threshold=Z[-num_clusters, 2],
+    )
     plt.title("Hierarchical Clustering Dendrogram")
     plt.xlabel("Glasses")
     plt.ylabel("Distance")
+    plt.ylim(0, 60)  # Set y-axis limit
     plt.show()
-
-    data["cluster"] = fcluster(Z, t=num_clusters, criterion="maxclust")
-
-    # Add cluster labels to the original data
-    data["cluster"] = data["cluster"].astype(
-        str
-    )  # Convert to string for easier analysis
 
 
 def pca(data, multifocal):
@@ -192,10 +198,10 @@ def compare_clusters(data, inventory_data):
         }
     ).fillna(0)
 
-    print(comparison_df)
+    print(comparison_df["dispense_cluster_count"])
 
     # Plot cluster frequencies as percentages
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(10, 4))
 
     # We'll plot a grouped bar chart
     bar_width = 0.3
@@ -240,8 +246,13 @@ def randomforest(data, multifocal):
     clusters = y.unique()
     clusters.sort()
 
+    # Determine the number of features
+    num_features = len(X.columns)
+
     # Plot feature importances for each cluster
-    fig, axes = plt.subplots(len(clusters), 1, figsize=(10, len(clusters) * 4))
+    fig, axes = plt.subplots(
+        1, len(clusters), figsize=(len(clusters) * 5, num_features * 0.75)
+    )
 
     for i, cluster in enumerate(clusters):
         # Create binary labels for the current cluster
@@ -258,10 +269,15 @@ def randomforest(data, multifocal):
         # Plot feature importances
         axes[i].barh(features, feature_importances)
         axes[i].set_xlabel("Feature Importance")
-        axes[i].set_ylabel("Feature")
+        axes[i].set_xlim(0, 0.5)
+        axes[i].invert_yaxis()  # Reverse the y-axis
+        if i == 0:
+            axes[i].set_ylabel("Feature")
+        else:
+            axes[i].set_yticklabels([])
         axes[i].set_title(f"Feature Importances for Cluster {cluster}")
 
-    plt.tight_layout()
+    plt.tight_layout(pad=1.0)
     plt.show()
 
 
