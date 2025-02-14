@@ -288,8 +288,34 @@ def read_dispense(multifocal, location):
     return data
 
 
+def read_unsuccessful_searches(multifocal, location):
+    data = read_data("unsuccessful_*.csv", multifocal, location)
+    data = clean_data(data, multifocal)
+    data = remove_close_timestamps(data, "Added date (in CST)")
+    return data
+
+
+def remove_close_timestamps(data, time_column):
+    # Convert the time column to datetime
+    data[time_column] = pd.to_datetime(data[time_column])
+
+    data = data.sort_values(by=time_column)
+    data["time_diff"] = data[time_column].diff().dt.total_seconds().abs()
+    filtered_data = data[(data["time_diff"] > 60) | (data["time_diff"].isna())]
+
+    removed_count = len(data) - len(filtered_data)
+    filtered_data = filtered_data.drop(columns=["time_diff"])
+    print(
+        f"Number of removed unsuccessful searches that were very close in time: {removed_count}"
+    )
+
+    return filtered_data
+
+
 def launch(multifocal, location, cluster_count):
     data = read_dispense(multifocal, location)
+    unsucc_data = read_unsuccessful_searches(multifocal, location)
+    data = pd.concat([data, unsucc_data], ignore_index=True)
     print("Number of glasses used for clustering:", len(data))
     X_scaled, scaler = scale_data(data, multifocal)
     clustering(data, X_scaled, num_clusters=cluster_count)
@@ -297,4 +323,4 @@ def launch(multifocal, location, cluster_count):
     inventory_data = process_inventory(data, multifocal, location, scaler, X_scaled)
     compare_clusters(data, inventory_data)
     randomforest(data, multifocal=multifocal)
-    # return data, inventory_data
+    return data, inventory_data
