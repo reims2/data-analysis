@@ -75,7 +75,7 @@ def clean_data(data, multifocal):
     z_scores = np.abs((X_scaled - X_scaled.mean(axis=0)) / X_scaled.std(axis=0))
 
     # Filter out rows where any Z-score is above the threshold (e.g., 3)
-    threshold = 3.9
+    threshold = 3.2
     new_data = data[(z_scores < threshold).all(axis=1)]
     print("Number of pre-filtered glasses:", len(data) - len(new_data))
     return new_data
@@ -101,7 +101,7 @@ def clustering(data, X_scaled, num_clusters):
     dendrogram(
         Z,
         truncate_mode="lastp",
-        p=num_clusters * 2,
+        p=num_clusters * 2.5,
         leaf_rotation=90.0,
         leaf_font_size=12.0,
         color_threshold=Z[-num_clusters, 2],
@@ -421,4 +421,4 @@ def launch(multifocal, location, cluster_count):
 
     randomforest(combined_data, multifocal=multifocal)
 
-    return combined_data, inventory_data
+    # return combined_data, inventory_data
