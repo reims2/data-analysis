@@ -34,6 +34,10 @@ def get_features(multifocal):
     )
 
 
+def reverse_wraparound_axis(axis_value):
+    return 180 - axis_value if axis_value > 90 else axis_value
+
+
 def read_data(file_pattern, multifocal, location):
     # Use glob to get all file paths matching the pattern
     file_paths = glob.glob(file_pattern)
@@ -46,6 +50,15 @@ def read_data(file_pattern, multifocal, location):
     else:
         data = data[data["Type"] == "single"]
     data = data[data["Location"] == location]
+
+    # Add new columns for original axis data
+    data["OD Axis Original"] = data["OD Axis"]
+    data["OS Axis Original"] = data["OS Axis"]
+
+    # Handle reverse wraparound for axis
+    data["OD Axis"] = data["OD Axis"].apply(reverse_wraparound_axis)
+    data["OS Axis"] = data["OS Axis"].apply(reverse_wraparound_axis)
+
     return data
 
 
@@ -408,4 +421,4 @@ def launch(multifocal, location, cluster_count):
 
     randomforest(combined_data, multifocal=multifocal)
 
-    # return combined_data, inventory_data
+    return combined_data, inventory_data
