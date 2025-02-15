@@ -385,7 +385,7 @@ def remove_close_unsuccessful_searches(
     return filtered_unsuccessful_data, combined_data
 
 
-def plot_cluster_feature_distributions(combined_data, multifocal):
+def plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifocal):
     features = get_features(multifocal)
     features = [
         feature.replace("OD Axis", "OD Axis Original").replace(
@@ -393,10 +393,15 @@ def plot_cluster_feature_distributions(combined_data, multifocal):
         )
         for feature in features
     ]
-    clusters = combined_data["cluster"].unique().sort()
+    combined_data = pd.concat([dispense_data, unsuccessful_data], ignore_index=True)
+    clusters = combined_data["cluster"].unique()
+    clusters.sort()
 
     for cluster in clusters:
-        cluster_data = combined_data[combined_data["cluster"] == cluster]
+        dispense_data_cluster = dispense_data[dispense_data["cluster"] == cluster]
+        unsuccessful_data_cluster = unsuccessful_data[
+            unsuccessful_data["cluster"] == cluster
+        ]
 
         # Create subplots
         fig, axes = plt.subplots(2, len(features) // 2, figsize=(20, 10))
@@ -430,12 +435,16 @@ def plot_cluster_feature_distributions(combined_data, multifocal):
                 label="Total",
             )
 
-            # Plot distribution for the current cluster
+            # Plot dispense and unsuccessful data as stacked bar graphs
             ax.hist(
-                cluster_data[feature],
+                [dispense_data_cluster[feature], unsuccessful_data_cluster[feature]],
                 bins=bins,
-                alpha=0.7,
-                label=f"Cluster {cluster}",
+                stacked=True,
+                color=["green", "red"],
+                label=[
+                    f"Dispense Cluster {cluster}",
+                    f"Unsuccessful Cluster {cluster}",
+                ],
             )
 
             ax.set_title(feature)
@@ -473,7 +482,6 @@ def launch(multifocal, location, cluster_count):
     unsuccessful_data, combined_data = remove_close_unsuccessful_searches(
         unsuccessful_data, combined_data, "Added date (in CST)"
     )
-
     inventory_data = process_inventory(
         combined_data, multifocal, location, scaler, X_scaled
     )
@@ -483,6 +491,6 @@ def launch(multifocal, location, cluster_count):
 
     randomforest(combined_data, multifocal=multifocal)
 
-    plot_cluster_feature_distributions(combined_data, multifocal)
+    plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifocal)
 
     # return combined_data, inventory_data
