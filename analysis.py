@@ -222,9 +222,9 @@ def compare_clusters(dispense_data, unsuccessful_data, inventory_data):
     comparison_df = pd.DataFrame(
         {
             "dispense_cluster_count": dispense_cluster_count,
-            "dispense_cluster_percent": dispense_cluster_freq * 100,
+            "unsuccessful_cluster_count": unsuccessful_cluster_counts,
+            "inventory_cluster_count": inventory_cluster_count,
             "inventory_cluster_percent": inventory_cluster_freq * 100,
-            "unsuccessful_cluster_percent": unsuccessful_cluster_counts,
             "dispense_cluster_percent_total": dispense_cluster_percent_total,
             "unsuccessful_cluster_percent_total": unsuccessful_cluster_percent_total,
         }
@@ -273,6 +273,51 @@ def plot_compared_clusters(comparison_df):
     ax.set_ylabel("Frequency (%)")
     ax.set_title(
         "Comparison of Cluster Frequencies: Dispensed vs. Inventory vs. Unsuccessful"
+    )
+    ax.legend()
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_absolute_compared_clusters(comparison_df):
+    fig, ax = plt.subplots(figsize=(10, 4))
+
+    # We'll plot a grouped bar chart
+    bar_width = 0.2
+    clusters = comparison_df.index
+    x_positions = range(len(clusters))
+
+    ax.bar(
+        [x - bar_width for x in x_positions],
+        comparison_df["dispense_cluster_count"],
+        width=bar_width,
+        label="Dispensed (#)",
+        color="green",
+    )
+
+    ax.bar(
+        x_positions,
+        comparison_df["inventory_cluster_count"],
+        width=bar_width,
+        label="Inventory (#)",
+        color="black",  # Color for inventory
+    )
+
+    ax.bar(
+        [x + bar_width for x in x_positions],
+        comparison_df["unsuccessful_cluster_count"],
+        width=bar_width,
+        label="Unsuccessful (#)",
+        color="red",
+    )
+
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(clusters)
+    ax.set_xlabel("Cluster")
+    ax.set_ylabel("Count")
+    ax.set_title(
+        "Comparison of Cluster Counts: Dispensed vs. Inventory vs. Unsuccessful"
     )
     ax.legend()
 
@@ -338,8 +383,8 @@ def read_dispense(multifocal, location):
 
 def read_unsuccessful_searches(multifocal, location):
     data = read_data("unsuccessful_*.csv", multifocal, location)
-    data = clean_data(data, multifocal)
     data = remove_close_timestamps(data, "Added date (in CST)")
+    data = clean_data(data, multifocal)
     print(f"Number of unsuccessful searches: {len(data)}")
     return data
 
@@ -350,7 +395,7 @@ def remove_close_timestamps(data, time_column):
 
     data = data.sort_values(by=time_column)
     data["time_diff"] = data[time_column].diff().dt.total_seconds().abs()
-    filtered_data = data[(data["time_diff"] > 120) | (data["time_diff"].isna())]
+    filtered_data = data[(data["time_diff"] > 150) | (data["time_diff"].isna())]
 
     removed_count = len(data) - len(filtered_data)
     filtered_data = filtered_data.drop(columns=["time_diff"])
@@ -404,7 +449,7 @@ def plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifo
         ]
 
         # Create subplots
-        fig, axes = plt.subplots(2, len(features) // 2, figsize=(20, 10))
+        fig, axes = plt.subplots(2, len(features) // 2, figsize=(12, 6))
         axes = axes.flatten()
 
         for i, feature in enumerate(features):
@@ -442,8 +487,8 @@ def plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifo
                 stacked=True,
                 color=["green", "red"],
                 label=[
-                    f"Dispense Cluster {cluster}",
-                    f"Unsuccessful Cluster {cluster}",
+                    f"Dispense",
+                    f"Unsuccessful",
                 ],
             )
 
@@ -492,5 +537,7 @@ def launch(multifocal, location, cluster_count):
     randomforest(combined_data, multifocal=multifocal)
 
     plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifocal)
+
+    plot_absolute_compared_clusters(comparison)
 
     # return combined_data, inventory_data
