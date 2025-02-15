@@ -450,7 +450,7 @@ def plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifo
         ]
 
         # Create subplots
-        fig, axes = plt.subplots(2, len(features) // 2, figsize=(12, 6))
+        fig, axes = plt.subplots(2, len(features) // 2, figsize=(14, 8))
         axes = axes.flatten()
 
         for i, feature in enumerate(features):
@@ -458,17 +458,21 @@ def plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifo
 
             # Determine bin width and fixed min/max based on feature type
             if "Axis" in feature:
-                bin_width = 6
+                bin_width = 9
                 min_val, max_val = 0, 180
+                xticks = np.arange(min_val, max_val + bin_width, 2 * bin_width)
             elif "Sphere" in feature:
                 bin_width = 0.25
                 min_val, max_val = -4, 4
+                xticks = np.arange(min_val, max_val + bin_width, 1.0)
             elif "Cylinder" in feature:
                 bin_width = 0.25
                 min_val, max_val = -3, 0
+                xticks = np.arange(min_val, max_val + bin_width, 0.5)
             elif "Add" in feature:
                 bin_width = 0.25
                 min_val, max_val = 0, 4
+                xticks = np.arange(min_val, max_val + bin_width, 0.5)
 
             bins = np.arange(min_val, max_val + bin_width, bin_width)
 
@@ -495,6 +499,10 @@ def plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifo
 
             ax.set_title(feature)
             ax.legend()
+
+            # Set xticks based on feature type
+            ax.set_xticks(xticks)
+            plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
 
         plt.suptitle(f"Feature Distributions for Cluster {cluster}")
         plt.tight_layout(rect=[0, 0, 1, 0.96])
@@ -541,4 +549,4 @@ def launch(multifocal, location, cluster_count):
 
     plot_absolute_compared_clusters(comparison)
 
-    return combined_data, inventory_data
+    # return combined_data, inventory_data
