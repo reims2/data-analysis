@@ -51,6 +51,9 @@ def read_data(file_pattern, multifocal, location):
     else:
         data = data[data["Type"] == "single"]
     data = data[data["Location"] == location]
+    # Create a comparison DataFrame
+    data["Added date (in CST)"] = pd.to_datetime(data["Added date (in CST)"])
+    data["dispension date (in CST)"] = pd.to_datetime(data["dispension date (in CST)"])
 
     # Add new columns for original axis data
     data["OD Axis Original"] = data["OD Axis"]
@@ -63,7 +66,7 @@ def read_data(file_pattern, multifocal, location):
     return data
 
 
-def clean_data(data, multifocal):
+def clean_data(data, multifocal, refererence=None):
     X = data[get_features(multifocal)]
 
     # Handle missing values (if any)
@@ -71,12 +74,13 @@ def clean_data(data, multifocal):
 
     # Normalize the data
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+    scaler.fit(refererence[get_features(multifocal)] if refererence is not None else X)
+    X_scaled = scaler.transform(X)
     # Calculate Z-scores
     z_scores = np.abs((X_scaled - X_scaled.mean(axis=0)) / X_scaled.std(axis=0))
 
     # Filter out rows where any Z-score is above the threshold (e.g., 3)
-    threshold = 3.2
+    threshold = 2.8
     new_data = data[(z_scores < threshold).all(axis=1)]
     print("Number of pre-filtered glasses:", len(data) - len(new_data))
     return new_data
@@ -381,20 +385,21 @@ def read_dispense(multifocal, location):
     return data
 
 
-def read_unsuccessful_searches(multifocal, location):
+def read_unsuccessful_searches(multifocal, location, dispense_data):
     data = read_data("unsuccessful_*.csv", multifocal, location)
-    data = remove_close_timestamps(data, "Added date (in CST)")
-    data = clean_data(data, multifocal)
+    data = data.sort_values(by="Added date (in CST)")
+    # necessary bc earlier data returned wrong results due to frontend bugs in reims2
+    data = data[data["Added date (in CST)"] >= "2024-02-01"]
+    data = data[data["isBal"] == "DISABLE_NONE"]
+    data = data[data["highTolerance"] == False]
+    data = remove_close_timestamps(data)
+    data = clean_data(data, multifocal, dispense_data)
     print(f"Number of unsuccessful searches: {len(data)}")
     return data
 
 
-def remove_close_timestamps(data, time_column):
-    # Convert the time column to datetime
-    data[time_column] = pd.to_datetime(data[time_column])
-
-    data = data.sort_values(by=time_column)
-    data["time_diff"] = data[time_column].diff().dt.total_seconds().abs()
+def remove_close_timestamps(data):
+    data["time_diff"] = data["Added date (in CST)"].diff().dt.total_seconds().abs()
     filtered_data = data[(data["time_diff"] > 150) | (data["time_diff"].isna())]
 
     removed_count = len(data) - len(filtered_data)
@@ -407,14 +412,10 @@ def remove_close_timestamps(data, time_column):
 
 
 def remove_close_unsuccessful_searches(
-    unsuccessful_data, combined_data, time_column, threshold=6 * 60
+    unsuccessful_data, combined_data, threshold=6 * 60
 ):
-    # Convert the time column to datetime
-    unsuccessful_data[time_column] = pd.to_datetime(unsuccessful_data[time_column])
-
-    unsuccessful_data = unsuccessful_data.sort_values(by=time_column)
     unsuccessful_data["time_diff"] = (
-        unsuccessful_data[time_column].diff().dt.total_seconds().abs()
+        unsuccessful_data["Added date (in CST)"].diff().dt.total_seconds().abs()
     )
     filtered_unsuccessful_data = unsuccessful_data[
         (unsuccessful_data["time_diff"] > threshold)
@@ -503,7 +504,7 @@ def plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifo
 def launch(multifocal, location, cluster_count):
 
     dispense_data = read_dispense(multifocal, location)
-    unsuccessful_data = read_unsuccessful_searches(multifocal, location)
+    unsuccessful_data = read_unsuccessful_searches(multifocal, location, dispense_data)
 
     # Reset indices to ensure alignment
     dispense_data = dispense_data.reset_index(drop=True)
@@ -525,7 +526,7 @@ def launch(multifocal, location, cluster_count):
 
     # Remove unsuccessful searches that were relatively close in time
     unsuccessful_data, combined_data = remove_close_unsuccessful_searches(
-        unsuccessful_data, combined_data, "Added date (in CST)"
+        unsuccessful_data, combined_data
     )
     inventory_data = process_inventory(
         combined_data, multifocal, location, scaler, X_scaled
@@ -540,4 +541,4 @@ def launch(multifocal, location, cluster_count):
 
     plot_absolute_compared_clusters(comparison)
 
-    # return combined_data, inventory_data
+    return combined_data, inventory_data
