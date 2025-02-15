@@ -1,4 +1,5 @@
 import pandas as pd
+import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 import glob
 import numpy as np
@@ -384,6 +385,67 @@ def remove_close_unsuccessful_searches(
     return filtered_unsuccessful_data, combined_data
 
 
+def plot_cluster_feature_distributions(combined_data, multifocal):
+    features = get_features(multifocal)
+    features = [
+        feature.replace("OD Axis", "OD Axis Original").replace(
+            "OS Axis", "OS Axis Original"
+        )
+        for feature in features
+    ]
+    clusters = combined_data["cluster"].unique().sort()
+
+    for cluster in clusters:
+        cluster_data = combined_data[combined_data["cluster"] == cluster]
+
+        # Create subplots
+        fig, axes = plt.subplots(2, len(features) // 2, figsize=(20, 10))
+        axes = axes.flatten()
+
+        for i, feature in enumerate(features):
+            ax = axes[i]
+
+            # Determine bin width and fixed min/max based on feature type
+            if "Axis" in feature:
+                bin_width = 6
+                min_val, max_val = 0, 180
+            elif "Sphere" in feature:
+                bin_width = 0.25
+                min_val, max_val = -4, 4
+            elif "Cylinder" in feature:
+                bin_width = 0.25
+                min_val, max_val = -3, 0
+            elif "Add" in feature:
+                bin_width = 0.25
+                min_val, max_val = 0, 4
+
+            bins = np.arange(min_val, max_val + bin_width, bin_width)
+
+            # Plot total distribution
+            ax.hist(
+                combined_data[feature],
+                bins=bins,
+                color="gray",
+                alpha=0.3,
+                label="Total",
+            )
+
+            # Plot distribution for the current cluster
+            ax.hist(
+                cluster_data[feature],
+                bins=bins,
+                alpha=0.7,
+                label=f"Cluster {cluster}",
+            )
+
+            ax.set_title(feature)
+            ax.legend()
+
+        plt.suptitle(f"Feature Distributions for Cluster {cluster}")
+        plt.tight_layout(rect=[0, 0, 1, 0.96])
+        plt.show()
+
+
 def launch(multifocal, location, cluster_count):
 
     dispense_data = read_dispense(multifocal, location)
@@ -420,5 +482,7 @@ def launch(multifocal, location, cluster_count):
     plot_compared_clusters(comparison)
 
     randomforest(combined_data, multifocal=multifocal)
+
+    plot_cluster_feature_distributions(combined_data, multifocal)
 
     # return combined_data, inventory_data
