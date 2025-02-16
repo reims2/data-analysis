@@ -1,12 +1,12 @@
-import pandas as pd
-import seaborn as sns
-from sklearn.preprocessing import StandardScaler
 import glob
-import numpy as np
-from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from scipy.cluster.hierarchy import dendrogram, fcluster, linkage
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
 
 pd.options.mode.copy_on_write = True
 
@@ -82,7 +82,7 @@ def clean_data(data, multifocal, refererence=None):
     # Filter out rows where any Z-score is above the threshold (e.g., 3)
     threshold = 2.8
     new_data = data[(z_scores < threshold).all(axis=1)]
-    print("Number of pre-filtered glasses:", len(data) - len(new_data))
+    # print("Number of pre-filtered glasses:", len(data) - len(new_data))
     return new_data
 
 
@@ -190,10 +190,9 @@ def compare_clusters(dispense_data, unsuccessful_data, inventory_data):
     dispense_cluster_count = (
         dispense_data["cluster"].value_counts().rename("dispense_cluster_count")
     )
-    dispense_cluster_freq = (
-        dispense_data["cluster"]
-        .value_counts(normalize=True)
-        .rename("dispense_cluster_frequency")
+    # Compute absolute and relative frequency in the unsuccessful data
+    unsuccessful_cluster_counts = (
+        unsuccessful_data["cluster"].value_counts().rename("unsuccessful_cluster_count")
     )
 
     # Compute absolute and relative frequency in the inventory data
@@ -205,11 +204,6 @@ def compare_clusters(dispense_data, unsuccessful_data, inventory_data):
         .value_counts(normalize=True)
         .rename("inventory_cluster_frequency")
     )
-
-    # Calculate the percentage of unsuccessful glasses in each cluster
-    unsuccessful_cluster_counts = (
-        unsuccessful_data["cluster"].value_counts(normalize=True) * 100
-    ).rename("unsuccessful_cluster_percent")
 
     # Calculate the total count of data
     total_count = len(dispense_data) + len(unsuccessful_data)
@@ -225,16 +219,21 @@ def compare_clusters(dispense_data, unsuccessful_data, inventory_data):
     # Create a comparison DataFrame
     comparison_df = pd.DataFrame(
         {
-            "dispense_cluster_count": dispense_cluster_count,
-            "unsuccessful_cluster_count": unsuccessful_cluster_counts,
-            "inventory_cluster_count": inventory_cluster_count,
+            "dispense_cluster_count": dispense_cluster_count.astype(int),
+            "unsuccessful_cluster_count": unsuccessful_cluster_counts.astype(int),
+            "inventory_cluster_count": inventory_cluster_count.astype(int),
             "inventory_cluster_percent": inventory_cluster_freq * 100,
             "dispense_cluster_percent_total": dispense_cluster_percent_total,
             "unsuccessful_cluster_percent_total": unsuccessful_cluster_percent_total,
         }
     ).fillna(0)
 
-    print(comparison_df["dispense_cluster_count"])
+    print(
+        (
+            comparison_df["dispense_cluster_count"]
+            + comparison_df["unsuccessful_cluster_count"]
+        ).astype(int)
+    )
     return comparison_df
 
 
@@ -381,7 +380,7 @@ def read_dispense(multifocal, location):
     data = read_data("dispense_report*.csv", multifocal, location)
     data = data[data["dispense type"] == "DISPENSED"]
     data = clean_data(data, multifocal)
-    print(f"Number of glasses dispensed: {len(data)}")
+    print(f"{len(data)} dispensed glasses loaded.")
     return data
 
 
@@ -394,7 +393,7 @@ def read_unsuccessful_searches(multifocal, location, dispense_data):
     data = data[data["highTolerance"] == False]
     data = remove_close_timestamps(data)
     data = clean_data(data, multifocal, dispense_data)
-    print(f"Number of unsuccessful searches: {len(data)}")
+    print(f"{len(data)} unsuccessful searches loaded.")
     return data
 
 
@@ -404,9 +403,9 @@ def remove_close_timestamps(data):
 
     removed_count = len(data) - len(filtered_data)
     filtered_data = filtered_data.drop(columns=["time_diff"])
-    print(
-        f"Number of removed unsuccessful searches that were very close in time: {removed_count}"
-    )
+    # print(
+    # f"{removed_count} unsuccessful searches removed due to very close timestamps."
+    # )
 
     return filtered_data
 
@@ -424,9 +423,9 @@ def remove_close_unsuccessful_searches(
 
     removed_count = len(unsuccessful_data) - len(filtered_unsuccessful_data)
     filtered_unsuccessful_data = filtered_unsuccessful_data.drop(columns=["time_diff"])
-    print(
-        f"Number of removed unsuccessful searches that were same cluster and close in time: {removed_count}"
-    )
+    # print(
+    #     f"{removed_count} unsuccessful searches removed due to close timestamps and cluster."
+    # )
 
     return filtered_unsuccessful_data, combined_data
 
@@ -519,7 +518,6 @@ def launch(multifocal, location, cluster_count):
     unsuccessful_data = unsuccessful_data.reset_index(drop=True)
 
     combined_data = pd.concat([dispense_data, unsuccessful_data], ignore_index=True)
-    print("Number of glasses used for clustering:", len(combined_data))
 
     X_scaled, scaler = scale_data(combined_data, multifocal)
     clustering(combined_data, X_scaled, num_clusters=cluster_count)
