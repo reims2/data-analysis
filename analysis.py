@@ -56,8 +56,8 @@ def read_data(file_pattern, multifocal, location):
     data["dispension date (in CST)"] = pd.to_datetime(data["dispension date (in CST)"])
 
     # Add new columns for original axis data
-    data["OD Axis Original"] = data["OD Axis"]
-    data["OS Axis Original"] = data["OS Axis"]
+    data["OD Axis Original"] = data["OD Axis"].apply(lambda x: 0 if x == 180 else x)
+    data["OS Axis Original"] = data["OS Axis"].apply(lambda x: 0 if x == 180 else x)
 
     # Handle reverse wraparound for axis
     data["OD Axis"] = data["OD Axis"].apply(reverse_wraparound_axis)
@@ -457,23 +457,35 @@ def plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifo
 
             # Determine bin width and fixed min/max based on feature type
             if "Axis" in feature:
-                bin_width = 9
+                bin_width = 10
                 min_val, max_val = 0, 180
-                xticks = np.arange(min_val, max_val + bin_width, 2 * bin_width)
+                xticks = np.arange(min_val, max_val + bin_width, 1 * bin_width)
+                xtick_labels = [
+                    f"{x:.0f}" if i % 2 == 0 else "" for i, x in enumerate(xticks)
+                ]
             elif "Sphere" in feature:
                 bin_width = 0.25
                 min_val, max_val = -4, 4
                 xticks = np.arange(min_val, max_val + bin_width, 0.5)
+                xtick_labels = [
+                    f"{x:.1f}" if i % 4 == 0 else "" for i, x in enumerate(xticks)
+                ]
             elif "Cylinder" in feature:
                 bin_width = 0.25
                 min_val, max_val = -3, 0
-                xticks = np.arange(min_val, max_val + bin_width, 0.5)
+                xticks = np.arange(min_val, max_val + bin_width, 0.25)
+                xtick_labels = [
+                    f"{x:.1f}" if i % 2 == 0 else "" for i, x in enumerate(xticks)
+                ]
             elif "Add" in feature:
                 bin_width = 0.25
                 min_val, max_val = 0, 4
-                xticks = np.arange(min_val, max_val + bin_width, 0.5)
+                xticks = np.arange(min_val, max_val + bin_width, 0.25)
+                xtick_labels = [
+                    f"{x:.1f}" if i % 2 == 0 else "" for i, x in enumerate(xticks)
+                ]
 
-            bins = np.arange(min_val, max_val + bin_width, bin_width)
+            bins = np.arange(min_val, max_val + 2 * bin_width, bin_width)
 
             # Plot total distribution
             ax.hist(
@@ -482,6 +494,7 @@ def plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifo
                 color="gray",
                 alpha=0.3,
                 label="Total",
+                align="mid" if "Axis" in feature else "left",
             )
 
             # Plot dispense and unsuccessful data as stacked bar graphs
@@ -494,6 +507,7 @@ def plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifo
                     f"Dispense",
                     f"Unsuccessful",
                 ],
+                align="mid" if "Axis" in feature else "left",
             )
 
             ax.set_title(feature)
@@ -501,7 +515,8 @@ def plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifo
 
             # Set xticks based on feature type
             ax.set_xticks(xticks)
-            plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
+            ax.set_xticklabels(xtick_labels)
+            # plt.setp(ax.get_xticklabels(), rotation=45, ha="left")
 
         plt.suptitle(f"Feature Distributions for Cluster {cluster}")
         plt.tight_layout(rect=[0, 0, 1, 0.96])
