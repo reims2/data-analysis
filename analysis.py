@@ -430,7 +430,9 @@ def remove_close_unsuccessful_searches(
     return filtered_unsuccessful_data, combined_data
 
 
-def plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifocal):
+def plot_cluster_feature_distributions(
+    dispense_data, unsuccessful_data, multifocal, location
+):
     features = get_features(multifocal)
     features = [
         feature.replace("OD Axis", "OD Axis Original").replace(
@@ -520,6 +522,7 @@ def plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifo
 
         plt.suptitle(f"Feature Distributions for Cluster {cluster}")
         plt.tight_layout(rect=[0, 0, 1, 0.96])
+        plt.savefig(f"plots/features_{location}_{multifocal}_{cluster}.png")
         plt.show()
 
 
@@ -560,7 +563,9 @@ def launch(multifocal, location, cluster_count):
 
     randomforest(combined_data, multifocal=multifocal)
 
-    plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifocal)
+    plot_cluster_feature_distributions(
+        dispense_data, unsuccessful_data, multifocal, location
+    )
 
     plot_absolute_compared_clusters(comparison)
 
