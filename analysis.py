@@ -463,7 +463,7 @@ def plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifo
             elif "Sphere" in feature:
                 bin_width = 0.25
                 min_val, max_val = -4, 4
-                xticks = np.arange(min_val, max_val + bin_width, 1.0)
+                xticks = np.arange(min_val, max_val + bin_width, 0.5)
             elif "Cylinder" in feature:
                 bin_width = 0.25
                 min_val, max_val = -3, 0
@@ -509,7 +509,9 @@ def plot_cluster_feature_distributions(dispense_data, unsuccessful_data, multifo
 
 
 def launch(multifocal, location, cluster_count):
-
+    print(
+        f"Analyzing {location} data for {'multifocal' if multifocal else 'single'} glasses."
+    )
     dispense_data = read_dispense(multifocal, location)
     unsuccessful_data = read_unsuccessful_searches(multifocal, location, dispense_data)
 
